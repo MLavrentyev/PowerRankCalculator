@@ -129,21 +129,22 @@ def get_event_data(event):
 
     match_entries = MatchEntryList(event)
     for match in request.json():
-        rt1 = match["alliances"]["red"]["team_keys"][0]
-        rt2 = match["alliances"]["red"]["team_keys"][1]
-        rt3 = match["alliances"]["red"]["team_keys"][2]
-        rv = match["score_breakdown"]["red"]["vaultPoints"]
-        rf = match["score_breakdown"]["blue"]["foulPoints"]
-        rt = match["score_breakdown"]["red"]["totalPoints"]
-        match_entries.add_entry(rt1, rt2, rt3, rv, rf, rt)
+        if match["comp_level"] == "qm":
+            rt1 = match["alliances"]["red"]["team_keys"][0]
+            rt2 = match["alliances"]["red"]["team_keys"][1]
+            rt3 = match["alliances"]["red"]["team_keys"][2]
+            rv = match["score_breakdown"]["red"]["vaultPoints"]
+            rf = match["score_breakdown"]["blue"]["foulPoints"]
+            rt = match["score_breakdown"]["red"]["totalPoints"]
+            match_entries.add_entry(rt1, rt2, rt3, rv, rf, rt)
 
-        bt1 = match["alliances"]["blue"]["team_keys"][0]
-        bt2 = match["alliances"]["blue"]["team_keys"][1]
-        bt3 = match["alliances"]["blue"]["team_keys"][2]
-        bv = match["score_breakdown"]["blue"]["vaultPoints"]
-        bf = match["score_breakdown"]["red"]["foulPoints"]
-        bt = match["score_breakdown"]["blue"]["totalPoints"]
-        match_entries.add_entry(bt1, bt2, bt3, bv, bf, bt)
+            bt1 = match["alliances"]["blue"]["team_keys"][0]
+            bt2 = match["alliances"]["blue"]["team_keys"][1]
+            bt3 = match["alliances"]["blue"]["team_keys"][2]
+            bv = match["score_breakdown"]["blue"]["vaultPoints"]
+            bf = match["score_breakdown"]["red"]["foulPoints"]
+            bt = match["score_breakdown"]["blue"]["totalPoints"]
+            match_entries.add_entry(bt1, bt2, bt3, bv, bf, bt)
 
     match_entries.export_as_csv()
     return match_entries
