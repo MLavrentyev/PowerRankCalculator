@@ -2,6 +2,7 @@ import requests
 import config
 import csv
 import numpy as np
+import os
 
 
 class MatchEntryList:
@@ -31,7 +32,9 @@ class MatchEntryList:
 
     def export_as_csv(self, path=None):
         if not path:
-            path = "data/" + event + ".csv"
+            path = "data/" + self.event + "/" + self.event + ".csv"
+        if not os.path.exists(path.rsplit("/", 1)[0]):
+            os.makedirs(path.rsplit("/", 1)[0])
 
         with open(path, 'w', newline='') as file:
             writer = csv.writer(file)
@@ -68,9 +71,13 @@ class MatchEntryList:
 
     def export_binary_matrices(self, score_type, bin_path=None, s_path=None):
         if not bin_path:
-            bin_path = "data/" + self.event + "_bin.csv"
+            bin_path = "data/" + self.event + "/" + self.event + "_bin.csv"
         if not s_path:
             s_path = "data/" + self.event + "_scores.csv"
+        if not os.path.exists(s_path.rsplit("/", 1)[0]):
+            os.makedirs(s_path.rsplit("/", 1)[0])
+        if not os.path.exists(bin_path.rsplit("/", 1)[0]):
+            os.makedirs(bin_path.rsplit("/", 1)[0])
 
         bin_matrix, score_matrix = self.get_binary_matrices(score_type)
 
@@ -102,7 +109,9 @@ class MatchEntryList:
     def export_power_rankings(self, score_type, path=None):
         pow_ranks = self.get_power_rankings(score_type)
         if not path:
-            path = "data/" + self.event + "_" + score_type + "_pr.csv"
+            path = "data/" + self.event + "/" + self.event + "_" + score_type + "_pr.csv"
+        if not os.path.exists(path.rsplit("/", 1)[0]):
+            os.makedirs(path.rsplit("/", 1)[0])
 
         with open(path, 'w', newline='') as file:
             writer = csv.writer(file)
@@ -144,7 +153,6 @@ if __name__ == "__main__":
     data = []
     for event in events:
         entries = get_event_data(event)
-        data.append(entries)
-
-    data[0].export_power_rankings("vault")
-    data[1].export_power_rankings("vault")
+        entries.export_power_rankings("foul")
+        entries.export_power_rankings("vault")
+        entries.export_power_rankings("total")
