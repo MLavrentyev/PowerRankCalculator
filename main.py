@@ -28,31 +28,35 @@ class MatchEntryList:
             for entry in self.list:
                 writer.writerow(entry)
 
+def get_event_data(event):
+    tba_base_url = "http://www.thebluealliance.com/api/v3/"
 
-tba_base_url = "http://www.thebluealliance.com/api/v3/"
-event = "2018ctwat"
-
-payload = {"X-TBA-Auth-Key": config.tba_api_key}
-request_url = tba_base_url + "event/" + event + "/matches"
-request = requests.get(request_url, params=payload)
+    payload = {"X-TBA-Auth-Key": config.tba_api_key}
+    request_url = tba_base_url + "event/" + event + "/matches"
+    request = requests.get(request_url, params=payload)
 
 
-match_entries = MatchEntryList()
-for match in request.json():
-    rt1 = match["alliances"]["red"]["team_keys"][0]
-    rt2 = match["alliances"]["red"]["team_keys"][1]
-    rt3 = match["alliances"]["red"]["team_keys"][2]
-    rv = match["score_breakdown"]["red"]["vaultPoints"]
-    rf = match["score_breakdown"]["blue"]["foulPoints"]
-    rt = match["score_breakdown"]["red"]["totalPoints"]
-    match_entries.add_entry(rt1, rt2, rt3, rv, rf, rt)
+    match_entries = MatchEntryList()
+    for match in request.json():
+        rt1 = match["alliances"]["red"]["team_keys"][0]
+        rt2 = match["alliances"]["red"]["team_keys"][1]
+        rt3 = match["alliances"]["red"]["team_keys"][2]
+        rv = match["score_breakdown"]["red"]["vaultPoints"]
+        rf = match["score_breakdown"]["blue"]["foulPoints"]
+        rt = match["score_breakdown"]["red"]["totalPoints"]
+        match_entries.add_entry(rt1, rt2, rt3, rv, rf, rt)
 
-    bt1 = match["alliances"]["blue"]["team_keys"][0]
-    bt2 = match["alliances"]["blue"]["team_keys"][1]
-    bt3 = match["alliances"]["blue"]["team_keys"][2]
-    bv = match["score_breakdown"]["blue"]["vaultPoints"]
-    bf = match["score_breakdown"]["red"]["foulPoints"]
-    bt = match["score_breakdown"]["blue"]["totalPoints"]
-    match_entries.add_entry(bt1, bt2, bt3, bv, bf, bt)
+        bt1 = match["alliances"]["blue"]["team_keys"][0]
+        bt2 = match["alliances"]["blue"]["team_keys"][1]
+        bt3 = match["alliances"]["blue"]["team_keys"][2]
+        bv = match["score_breakdown"]["blue"]["vaultPoints"]
+        bf = match["score_breakdown"]["red"]["foulPoints"]
+        bt = match["score_breakdown"]["blue"]["totalPoints"]
+        match_entries.add_entry(bt1, bt2, bt3, bv, bf, bt)
 
-match_entries.export_as_csv("data/" + event + ".csv")
+    match_entries.export_as_csv("data/" + event + ".csv")
+
+if __name__ == "__main__":
+    events = ["2018ctwat", "2018ctsct"]
+    for event in events:
+        get_event_data(event)
