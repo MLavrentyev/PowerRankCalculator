@@ -21,7 +21,14 @@ class MatchEntryList:
             if team in entry[:3]:
                 team_entries.append(entry)
         return team_entries
-        
+
+    def get_sorted_team_list(self):
+        all_teams = []
+        for entry in self.list:
+            all_teams.extend(entry[:3])
+        all_teams = sorted(list(set(all_teams)))
+        return all_teams
+
     def export_as_csv(self, path=None):
         if not path:
             path = "data/" + event + ".csv"
@@ -33,12 +40,9 @@ class MatchEntryList:
             for entry in self.list:
                 writer.writerow(entry)
 
-    def get_binary_matrix(self, score_type):
+    def get_binary_matrices(self, score_type):
         # score_type should be one of: "vault", "foul", "total"
-        all_teams = []
-        for entry in self.list:
-            all_teams.extend(entry[:3])
-        all_teams = sorted(list(set(all_teams)))
+        all_teams = self.get_sorted_team_list()
 
         bin_matrix = np.zeros(shape=(len(self.list), len(all_teams)), dtype=int)
         for i in range(len(self.list)):
@@ -52,15 +56,15 @@ class MatchEntryList:
             bin_matrix[i][it3] = 1
 
         if score_type == "vault":
-            score_matrix = np.array(self.list, dtype=int)[:, 3].reshape(len(self.list), 1)
+            score_matrix = np.matrix(self.list, dtype=int)[:, 3].reshape(len(self.list), 1)
         elif score_type == "foul":
-            score_matrix = np.array(self.list, dtype=int)[:, 4].reshape(len(self.list), 1)
+            score_matrix = np.matrix(self.list, dtype=int)[:, 4].reshape(len(self.list), 1)
         elif score_type == "total":
-            score_matrix = np.array(self.list, dtype=int)[:, 5].reshape(len(self.list), 1)
+            score_matrix = np.matrix(self.list, dtype=int)[:, 5].reshape(len(self.list), 1)
         else:
             return
 
-        return bin_matrix, score_matrix
+        return np.matrix(bin_matrix), score_matrix
 
     def export_binary_matrices(self, score_type, bin_path=None, s_path=None):
         if not bin_path:
@@ -68,7 +72,7 @@ class MatchEntryList:
         if not s_path:
             s_path = "data/" + self.event + "_scores.csv"
 
-        bin_matrix, score_matrix = self.get_binary_matrix(score_type)
+        bin_matrix, score_matrix = self.get_binary_matrices(score_type)
 
         with open(bin_path, 'w', newline='') as bin_file:
             bin_writer = csv.writer(bin_file)
@@ -81,7 +85,30 @@ class MatchEntryList:
                 s_writer.writerow(row)
 
     def get_power_rankings(self, score_type):
-        pass
+        bin_matrix, score_matrix = self.get_binary_matrices(score_type)
+
+        ib_matrix = bin_matrix.T * bin_matrix
+        is_matrix = bin_matrix.T * score_matrix
+        power_rankings = ib_matrix.I * is_matrix
+
+        all_teams = self.get_sorted_team_list()
+        num_teams = len(all_teams)
+        all_teams = np.array(all_teams, dtype=int).reshape(num_teams, 1)
+        power_rankings = np.array(power_rankings, dtype=float).reshape(num_teams, 1)
+        final_list = np.hstack((all_teams, power_rankings))
+
+        return final_list
+
+    def export_power_rankings(self, score_type, path=None):
+        pow_ranks = self.get_power_rankings(score_type)
+        if not path:
+            path = "data/" + self.event + "_" + score_type + "_pr.csv"
+
+        with open(path, 'w', newline='') as file:
+            writer = csv.writer(file)
+            for row in pow_ranks:
+                writer.writerow(row)
+
 
 def get_event_data(event):
     tba_base_url = "http://www.thebluealliance.com/api/v3/"
@@ -119,4 +146,5 @@ if __name__ == "__main__":
         entries = get_event_data(event)
         data.append(entries)
 
-    data[0].export_binary_matrices("total")
+    data[0].export_power_rankings("vault")
+    data[1].export_power_rankings("vault")
