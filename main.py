@@ -6,9 +6,9 @@ import os
 
 
 class MatchEntryList:
-    def __init__(self, event_key):
+    def __init__(self, event_keys):
         self.list = []
-        self.event = event_key
+        self.event = event_keys
         
     def add_entry(self, t1, t2, t3, vault, foul, total):
         t1 = t1[3:]
@@ -119,41 +119,41 @@ class MatchEntryList:
                 writer.writerow(row)
 
 
-def get_event_data(event):
+def get_event_data(events):
     tba_base_url = "http://www.thebluealliance.com/api/v3/"
-
     payload = {"X-TBA-Auth-Key": config.tba_api_key}
-    request_url = tba_base_url + "event/" + event + "/matches"
-    request = requests.get(request_url, params=payload)
+    match_entries = MatchEntryList(events)
 
+    for event in events:
+        request_url = tba_base_url + "event/" + event + "/matches"
+        request = requests.get(request_url, params=payload)
 
-    match_entries = MatchEntryList(event)
-    for match in request.json():
-        if match["comp_level"] == "qm":
-            rt1 = match["alliances"]["red"]["team_keys"][0]
-            rt2 = match["alliances"]["red"]["team_keys"][1]
-            rt3 = match["alliances"]["red"]["team_keys"][2]
-            rv = match["score_breakdown"]["red"]["vaultPoints"]
-            rf = match["score_breakdown"]["blue"]["foulPoints"]
-            rt = match["score_breakdown"]["red"]["totalPoints"]
-            match_entries.add_entry(rt1, rt2, rt3, rv, rf, rt)
+        for match in request.json():
+            if match["comp_level"] == "qm":
+                rt1 = match["alliances"]["red"]["team_keys"][0]
+                rt2 = match["alliances"]["red"]["team_keys"][1]
+                rt3 = match["alliances"]["red"]["team_keys"][2]
+                rv = match["score_breakdown"]["red"]["vaultPoints"]
+                rf = match["score_breakdown"]["blue"]["foulPoints"]
+                rt = match["score_breakdown"]["red"]["totalPoints"]
+                match_entries.add_entry(rt1, rt2, rt3, rv, rf, rt)
 
-            bt1 = match["alliances"]["blue"]["team_keys"][0]
-            bt2 = match["alliances"]["blue"]["team_keys"][1]
-            bt3 = match["alliances"]["blue"]["team_keys"][2]
-            bv = match["score_breakdown"]["blue"]["vaultPoints"]
-            bf = match["score_breakdown"]["red"]["foulPoints"]
-            bt = match["score_breakdown"]["blue"]["totalPoints"]
-            match_entries.add_entry(bt1, bt2, bt3, bv, bf, bt)
+                bt1 = match["alliances"]["blue"]["team_keys"][0]
+                bt2 = match["alliances"]["blue"]["team_keys"][1]
+                bt3 = match["alliances"]["blue"]["team_keys"][2]
+                bv = match["score_breakdown"]["blue"]["vaultPoints"]
+                bf = match["score_breakdown"]["red"]["foulPoints"]
+                bt = match["score_breakdown"]["blue"]["totalPoints"]
+                match_entries.add_entry(bt1, bt2, bt3, bv, bf, bt)
 
     match_entries.export_as_csv()
     return match_entries
 
 if __name__ == "__main__":
-    events = ["2018ctwat", "2018ctsct"]
+    events = ["2018ctwat", "2018ctsct", "2018mawor", "2018nhgrs", "2018mabri", "2018marea"]
     data = []
     for event in events:
-        entries = get_event_data(event)
+        entries = get_event_data([event])
         entries.export_power_rankings("foul")
         entries.export_power_rankings("vault")
         entries.export_power_rankings("total")
