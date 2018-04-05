@@ -3,6 +3,10 @@ import config
 import csv
 import numpy as np
 import os
+from datetime import date, datetime
+
+
+tba_base_url = "http://www.thebluealliance.com/api/v3/"
 
 
 class MatchEntryList:
@@ -120,7 +124,6 @@ class MatchEntryList:
 
 
 def get_event_data(events):
-    tba_base_url = "http://www.thebluealliance.com/api/v3/"
     payload = {"X-TBA-Auth-Key": config.tba_api_key}
     match_entries = MatchEntryList(events)
 
@@ -146,14 +149,39 @@ def get_event_data(events):
                 bt = match["score_breakdown"]["blue"]["totalPoints"]
                 match_entries.add_entry(bt1, bt2, bt3, bv, bf, bt)
 
-    match_entries.export_as_csv()
+    match_entries.export_as_csv(path="data/world/matches.csv")
     return match_entries
 
+
+def get_completed_events(year):
+    current_date = date.today()
+
+    request_url = tba_base_url + "events/" + str(year) + "/simple"
+    payload = {"X-TBA-Auth-Key": config.tba_api_key}
+    request = requests.get(request_url, params=payload).json()
+
+    all_events = []
+    for event in request:
+        event_end_date = datetime.strptime(event["end_date"], "%Y-%m-%d").date()
+        if event_end_date < current_date and 0 <= event["event_type"] <= 6:
+            all_events.append(event["key"])
+
+    return all_events
+
+
 if __name__ == "__main__":
-    events = ["2018ctwat", "2018ctsct", "2018mawor", "2018nhgrs", "2018mabri", "2018marea"]
-    data = []
-    for event in events:
-        entries = get_event_data([event])
-        entries.export_power_rankings("foul")
-        entries.export_power_rankings("vault")
-        entries.export_power_rankings("total")
+    # events = ["2018ctwat", "2018ctsct", "2018mawor", "2018nhgrs", "2018mabri", "2018marea"]
+    events = get_completed_events(2018)
+    entries = get_event_data(events)
+    print("Got data")
+    entries.export_power_rankings("total", path="data/world/total.csv")
+    print("Exported OPR")
+    entries.export_power_rankings("vault", path="data/world/vault.csv")
+    print("Exported VPR")
+    entries.export_power_rankings("foul", path="data/world/foul.csv")
+    print("Exported FPR")
+    # for event in events:
+    #     entries = get_event_data([event])
+    #     entries.export_power_rankings("foul")
+    #     entries.export_power_rankings("vault")
+    #     entries.export_power_rankings("total")
