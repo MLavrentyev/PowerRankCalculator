@@ -10,9 +10,17 @@ tba_base_url = "http://www.thebluealliance.com/api/v3/"
 
 
 class MatchEntryList:
-    def __init__(self, event_keys):
+    def __init__(self, event_keys, name=None):
         self.list = []
         self.event = event_keys
+
+        self.one_event = len(self.event) == 1
+        if name:
+            self.name = name
+        elif self.one_event:
+            self.name = self.event[0]
+        else:
+            raise NoNameException
         
     def add_entry(self, t1, t2, t3, vault, foul, total):
         t1 = t1[3:]
@@ -36,7 +44,7 @@ class MatchEntryList:
 
     def export_as_csv(self, path=None):
         if not path:
-            path = "data/" + self.event + "/" + self.event + ".csv"
+            path = "data/" + self.name + "/" + self.name + ".csv"
         if not os.path.exists(path.rsplit("/", 1)[0]):
             os.makedirs(path.rsplit("/", 1)[0])
 
@@ -75,9 +83,9 @@ class MatchEntryList:
 
     def export_binary_matrices(self, score_type, bin_path=None, s_path=None):
         if not bin_path:
-            bin_path = "data/" + self.event + "/" + self.event + "_bin.csv"
+            bin_path = "data/" + self.name + "/" + self.name + "_bin.csv"
         if not s_path:
-            s_path = "data/" + self.event + "_scores.csv"
+            s_path = "data/" + self.name + "_scores.csv"
         if not os.path.exists(s_path.rsplit("/", 1)[0]):
             os.makedirs(s_path.rsplit("/", 1)[0])
         if not os.path.exists(bin_path.rsplit("/", 1)[0]):
@@ -113,7 +121,7 @@ class MatchEntryList:
     def export_power_rankings(self, score_type, path=None):
         pow_ranks = self.get_power_rankings(score_type)
         if not path:
-            path = "data/" + self.event + "/" + self.event + "_" + score_type + "_pr.csv"
+            path = "data/" + self.name + "/" + self.name + "_" + score_type + "_pr.csv"
         if not os.path.exists(path.rsplit("/", 1)[0]):
             os.makedirs(path.rsplit("/", 1)[0])
 
@@ -121,6 +129,10 @@ class MatchEntryList:
             writer = csv.writer(file)
             for row in pow_ranks:
                 writer.writerow(row)
+
+
+class NoNameException(Exception):
+    pass
 
 
 def get_event_data(events):
@@ -170,8 +182,8 @@ def get_completed_events(year):
 
 
 if __name__ == "__main__":
-    # events = ["2018ctwat", "2018ctsct", "2018mawor", "2018nhgrs", "2018mabri", "2018marea"]
-    events = get_completed_events(2018)
+    events = ["2018ctwat", "2018ctsct", "2018mawor", "2018nhgrs", "2018mabri", "2018marea"]
+    # events = get_completed_events(2018)
     entries = get_event_data(events)
     print("Got data")
     entries.export_power_rankings("total", path="data/world/total.csv")
